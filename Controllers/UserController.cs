@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using twitter.Utilities;
 using twitter.DTOs;
 using twitter.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Todo.Controllers;
 
@@ -25,12 +26,15 @@ public class UserController : ControllerBase
         _user = user;
         _config = config;
     }
+    private int GetUserIdFromClaims(IEnumerable<Claim> claims)
+    {
+        return Convert.ToInt32(claims.Where(x => x.Type == twitterConstants.UserId).First().Value);
+    }
 
     [HttpPost("login")]
     public async Task<ActionResult<UserLoginResDTO>> Login(
         [FromBody] UserLoginDTO Data
     )
-
     {
         var existingUser = await _user.GetByEmail(Data.Email);
 
@@ -48,7 +52,7 @@ public class UserController : ControllerBase
 
             var res = new UserLoginResDTO
             {
-                Id = existingUser.Id,
+                UserId = existingUser.UserId,
                 Email = existingUser.Email,
                 Token = token,
             };
@@ -69,7 +73,7 @@ public class UserController : ControllerBase
 
         var claims = new[]
         {
-            new Claim(twitterConstants.Id, user.Id.ToString()),
+            new Claim(twitterConstants.UserId, user.UserId.ToString()),
             new Claim(twitterConstants.Email, user.Email),
         };
 
@@ -100,26 +104,28 @@ public class UserController : ControllerBase
     }
 
 
-    [HttpPut("{id}")]
-
-    public async Task<ActionResult> UpdateUser([FromRoute] long id,
+    [HttpPut("User_id")]
+    [Authorize]
+    public async Task<ActionResult> UpdateUser([FromRoute] long Userid,
     [FromBody] UserUpdateDto Data)
     {
-        var existing = await _user.GetById(id);
-        if (existing is null)
-            return NotFound("No user found with given id");
+        var UserId = GetUserIdFromClaims(User.Claims);
 
-        var toUpdateUser = existing with
+        var existingItem = await _user.GetById(UserId);
+
+        if (existingItem is null)
+            return NotFound();
+
+        if (existingItem.UserId != UserId)
+            return StatusCode(403, "You cannot update other's TODO");
+
+        var toUpdateItem = existingItem with
         {
-            Email = Data.Email?.Trim()?.ToLower() ?? existing.Email,
-            Password = Data.Password?.Trim()?.ToLower() ?? existing.Password,
+            Fullname = Data.Fullname is null ? existingItem.Fullname : Data.Fullname.Trim(),
 
         };
 
-        var didUpdate = await _user.Update(toUpdateUser);
-
-        if (!didUpdate)
-            return StatusCode(StatusCodes.Status500InternalServerError, "Could not update user");
+        await _user.Update(toUpdateItem);
 
         return NoContent();
     }

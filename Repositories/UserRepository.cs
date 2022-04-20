@@ -47,7 +47,7 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task<bool> Update(User Item)
     {
-        var query = $@"UPDATE ""{TableNames.user}"" SET password = @Password,email = @Email WHERE id = Id";
+        var query = $@"UPDATE ""{TableNames.user}"" SET password = @Password,email = @Email WHERE user_id = UserId";
 
 
         using (var con = NewConnection)
@@ -58,16 +58,16 @@ public class UserRepository : BaseRepository, IUserRepository
         }
     }
 
-    public async Task<User> GetById(long Id)
+    public async Task<User> GetById(long UserId)
     {
         var query = $@"SELECT * FROM ""{TableNames.user}""
-        WHERE id = @Id";
+        WHERE user_id = @UserId";
 
         using (var con = NewConnection)
             return await con.QuerySingleOrDefaultAsync<User>(query,
             new
             {
-                Id = Id
+                UserId = UserId
             });
     }
 

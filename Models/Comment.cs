@@ -1,11 +1,28 @@
-namespace twitter.models;
+using System.Text.Json.Serialization;
 
-public record omment
+namespace twitter.Models;
+
+public record Comment
 {
-    public int CommentId { get; set; }
-    public int PostId { get; set; }
-    public int UserId { get; set; }
+    [JsonPropertyName("comment_id")]
+    public long CommentId { get; set; }
+
+    [JsonPropertyName("text")]
     public string Text { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+
+    [JsonPropertyName("user_id")]
+    public long UserId { get; set; }
+
+    [JsonPropertyName("post_id")]
+
+    public long PostId { get; set; }
+
+    [JsonPropertyName("created_at")]
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    [JsonPropertyName("updated_at")]
+
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
 }

@@ -25,8 +25,8 @@ public record UserLoginResDTO
     [JsonPropertyName("email")]
     public string Email { get; set; }
 
-    [JsonPropertyName("id")]
-    public long Id { get; set; }
+    [JsonPropertyName("user_id")]
+    public long UserId { get; set; }
 }
 
 public record UserCreateDto
@@ -53,13 +53,11 @@ public record UserUpdateDto
 {
 
 
-    [JsonPropertyName("password")]
+    [JsonPropertyName("Fullname")]
 
-    public string Password { get; set; }
+    public string Fullname { get; set; }
 
-    [JsonPropertyName("email")]
-    [MaxLength(255)]
-    public string Email { get; set; }
+
 
 }
 
