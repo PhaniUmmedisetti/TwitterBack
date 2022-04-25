@@ -55,6 +55,7 @@ public class UserController : ControllerBase
                 UserId = existingUser.UserId,
                 Email = existingUser.Email,
                 Token = token,
+                FullName = existingUser.Fullname
             };
             return Ok(res);
         }
@@ -104,19 +105,19 @@ public class UserController : ControllerBase
     }
 
 
-    [HttpPut("User_id")]
+    [HttpPut]
     [Authorize]
-    public async Task<ActionResult> UpdateUser([FromRoute] long Userid,
+    public async Task<ActionResult> UpdateUser(
     [FromBody] UserUpdateDto Data)
     {
-        var UserId = GetUserIdFromClaims(User.Claims);
+        var userId = GetUserIdFromClaims(User.Claims);
 
-        var existingItem = await _user.GetById(UserId);
+        var existingItem = await _user.GetById(userId);
 
         if (existingItem is null)
             return NotFound();
 
-        if (existingItem.UserId != UserId)
+        if (existingItem.UserId != userId)
             return StatusCode(403, "You cannot update other's TODO");
 
         var toUpdateItem = existingItem with

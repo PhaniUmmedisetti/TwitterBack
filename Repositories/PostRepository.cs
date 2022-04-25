@@ -11,8 +11,13 @@ public interface IPostRepository
     Task Delete(long Id);
     Task<List<Post>> GetAll();
     Task<Post> GetById(long Id);
+    Task<Post> GetPost(long Id);
 
     Task<List<Post>> GetTweetsByUserId(long UserId);
+
+    Task<List<Post>> GetAll(PostParameters postParameters);
+
+
 }
 
 public class PostRepository : BaseRepository, IPostRepository
@@ -72,4 +77,30 @@ public class PostRepository : BaseRepository, IPostRepository
             return (await con.QueryAsync<Post>(query, new { UserId })).AsList();
     }
 
+    public async Task<Post> GetPost(long Id)
+    {
+        var query = $@"SELECT * FROM {TableNames.post} WHERE post_id = @Id";
+        using (var con = NewConnection)
+            return await con.QuerySingleOrDefaultAsync<Post>(query, new { Id });
+    }
+
+    public Task<Post> GetPost()
+    {
+        var query = $@"SELECT * FROM {TableNames.post}";
+        using (var con = NewConnection)
+            return con.QuerySingleOrDefaultAsync<Post>(query);
+    }
+
+    public async Task<List<Post>> GetAll(PostParameters postParameters)
+    {
+        var query = $@"SELECT * FROM ""{TableNames.post}"" LIMIT @Limit OFFSET @Offset";
+
+        List<Post> res;
+        using (var con = NewConnection)
+            res = (await con.QueryAsync<Post>(query, new { Limit = postParameters.PageSize, Offset = (postParameters.PageNumber - 1) * postParameters.PageSize }))
+
+            .AsList();
+
+        return res;
+    }
 }

@@ -70,10 +70,16 @@ public class CommentController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<Comment>>> GetAllComments()
+    [HttpGet("{post_id}")]
+    public async Task<ActionResult<List<Comment>>> GetAllComments([FromRoute] long post_id)
     {
         var allComment = await _comment.GetAll();
         return Ok(allComment);
+    }
+    [HttpGet]
+    public async Task<ActionResult<List<Post>>> GetAllPosts([FromQuery] CommentParameters commentParameters)
+    {
+        var allPosts = await _comment.GetAll(commentParameters);
+        return Ok(allPosts);
     }
 }

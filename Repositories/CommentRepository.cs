@@ -1,7 +1,7 @@
 using twitter.Models;
 using Dapper;
 using twitter.Utilities;
-
+using Microsoft.AspNetCore.Mvc;
 
 namespace twitter.Repositories;
 
@@ -13,6 +13,9 @@ public interface ICommentRepository
     Task<List<Comment>> GetAll();
 
     Task<Comment> GetById(long Id);
+
+    Task<List<Comment>> GetAll(CommentParameters commentParameters);
+
 
 }
 
@@ -34,7 +37,7 @@ public class CommentRepository : BaseRepository, ICommentRepository
 
     public async Task Delete(long Id)
     {
-        var query = $@"DELETE FROM {TableNames.comment} WHERE comment_id = @CommentId";
+        var query = $@"DELETE FROM {TableNames.comment} WHERE comment_id = @Id";
 
         using (var con = NewConnection)
             await con.ExecuteAsync(query, new { Id });
@@ -47,6 +50,20 @@ public class CommentRepository : BaseRepository, ICommentRepository
         using (var con = NewConnection)
             return (await con.QueryAsync<Comment>(query)).AsList();
     }
+
+    public async Task<List<Comment>> GetAll(CommentParameters commentParameters)
+    {
+        var query = $@"SELECT * FROM ""{TableNames.comment}"" LIMIT @Limit OFFSET @Offset";
+
+        List<Comment> res;
+        using (var con = NewConnection)
+            res = (await con.QueryAsync<Comment>(query, new { Limit = commentParameters.PageSize, Offset = (commentParameters.PageNumber - 1) * commentParameters.PageSize }))
+
+            .AsList();
+
+        return res;
+    }
+
 
 
     public async Task<Comment> GetById(long CommentId)

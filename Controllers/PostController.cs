@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using twitter.Utilities;
 using System.Security.Claims;
 
+
 namespace Todo.Controllers;
 
 [ApiController]
@@ -57,12 +58,12 @@ public class PostController : ControllerBase
 
 
     [HttpPut("{post_id}")]
-    public async Task<ActionResult> UpdateTodo([FromRoute] long id,
+    public async Task<ActionResult> UpdateTodo([FromRoute] long post_id,
     [FromBody] PostUpdateDTO Data)
     {
         var userId = GetUserIdFromClaims(User.Claims);
 
-        var existingItem = await _post.GetById(id);
+        var existingItem = await _post.GetById(post_id);
 
         if (existingItem is null)
             return NotFound();
@@ -82,11 +83,11 @@ public class PostController : ControllerBase
     }
 
     [HttpDelete("{post_id}")]
-    public async Task<ActionResult> DeleteTodo([FromRoute] long PostId)
+    public async Task<ActionResult> DeleteTodo([FromRoute] long post_id)
     {
         var userId = GetUserIdFromClaims(User.Claims);
 
-        var existingItem = await _post.GetById(PostId);
+        var existingItem = await _post.GetById(post_id);
 
         if (existingItem is null)
             return NotFound();
@@ -94,7 +95,7 @@ public class PostController : ControllerBase
         if (existingItem.UserId != userId)
             return StatusCode(404, "You cannot delete other's POST");
 
-        await _post.Delete(PostId);
+        await _post.Delete(post_id);
 
         return NoContent();
     }
@@ -102,9 +103,20 @@ public class PostController : ControllerBase
 
 
     [HttpGet]
-    public async Task<ActionResult<List<Post>>> GetAllPosts()
+    public async Task<ActionResult<List<Post>>> GetAllPosts([FromQuery] PostParameters postParameters)
     {
-        var allPosts = await _post.GetAll();
+        var allPosts = await _post.GetAll(postParameters);
         return Ok(allPosts);
     }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<List<Post>>> GetPost([FromRoute] long id)
+    {
+        var post = await _post.GetPost(id);
+        return Ok(post);
+    }
+    // {
+    //     var allPosts = await _post.GetPost(Id);
+    //     return Ok(allPosts);
+    // }
 }

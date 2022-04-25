@@ -47,7 +47,7 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task<bool> Update(User Item)
     {
-        var query = $@"UPDATE ""{TableNames.user}"" SET password = @Password,email = @Email WHERE user_id = UserId";
+        var query = $@"UPDATE ""{TableNames.user}"" SET full_name = @FullName WHERE user_id = @UserId";
 
 
         using (var con = NewConnection)
