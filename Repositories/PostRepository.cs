@@ -17,7 +17,7 @@ public interface IPostRepository
 
     Task<List<Post>> GetAll(PostParameters postParameters);
 
-
+    Task<List<Post>> ToListAsync();
 }
 
 public class PostRepository : BaseRepository, IPostRepository
@@ -98,6 +98,19 @@ public class PostRepository : BaseRepository, IPostRepository
         List<Post> res;
         using (var con = NewConnection)
             res = (await con.QueryAsync<Post>(query, new { Limit = postParameters.PageSize, Offset = (postParameters.PageNumber - 1) * postParameters.PageSize }))
+
+            .AsList();
+
+        return res;
+    }
+
+    public async Task<List<Post>> ToListAsync()
+    {
+        var query = $@"SELECT * FROM ""{TableNames.post}""";
+
+        List<Post> res;
+        using (var con = NewConnection)
+            res = (await con.QueryAsync<Post>(query))
 
             .AsList();
 

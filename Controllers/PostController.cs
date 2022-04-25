@@ -5,7 +5,7 @@ using twitter.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using twitter.Utilities;
 using System.Security.Claims;
-
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Todo.Controllers;
 
@@ -16,13 +16,22 @@ public class PostController : ControllerBase
 {
     private readonly ILogger<PostController> _logger;
     private readonly IPostRepository _post;
+    private readonly IMemoryCache _memoryCache;
+
 
     public PostController(ILogger<PostController> logger,
-    IPostRepository post)
+    IPostRepository post, IMemoryCache memoryCache
+    )
     {
         _logger = logger;
         _post = post;
+        _memoryCache = memoryCache;
+
     }
+    // {
+    //     _logger = logger;
+    //     _post = post;
+    // }
 
     private int GetUserIdFromClaims(IEnumerable<Claim> claims)
     {
@@ -105,8 +114,17 @@ public class PostController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<Post>>> GetAllPosts([FromQuery] PostParameters postParameters)
     {
-        var allPosts = await _post.GetAll(postParameters);
-        return Ok(allPosts);
+        var postCache = _memoryCache.Get<List<Post>>(key: "posts");
+        if (postCache is null)
+        {
+            postCache = await _post.GetAll(postParameters);
+            _memoryCache.Set(key: "posts", postCache, TimeSpan.FromMinutes(value: 1));
+        }
+
+
+
+        return Ok(postCache);
+        // return Ok(allPosts);
     }
 
     [HttpGet("{id}")]

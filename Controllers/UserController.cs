@@ -8,6 +8,7 @@ using twitter.Utilities;
 using twitter.DTOs;
 using twitter.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Todo.Controllers;
 
@@ -18,13 +19,17 @@ public class UserController : ControllerBase
     private readonly ILogger<UserController> _logger;
     private readonly IUserRepository _user;
     private readonly IConfiguration _config;
+    private readonly IMemoryCache _memoryCache;
+
 
     public UserController(ILogger<UserController> logger,
-    IUserRepository user, IConfiguration config)
+    IUserRepository user, IConfiguration config, IMemoryCache memoryCache)
     {
         _logger = logger;
         _user = user;
         _config = config;
+        _memoryCache = memoryCache;
+
     }
     private int GetUserIdFromClaims(IEnumerable<Claim> claims)
     {
@@ -36,26 +41,29 @@ public class UserController : ControllerBase
         [FromBody] UserLoginDTO Data
     )
     {
-        var existingUser = await _user.GetByEmail(Data.Email);
-
-        if (existingUser is null)
+        var userCache = _memoryCache.Get<User>(key: "user");
+        if (userCache is null)
+        {
+            userCache = await _user.GetByEmail(Data.Email);
+        }
+        if (userCache is null)
             return NotFound();
 
         try
         {
-            bool passwordVerify = BCrypt.Net.BCrypt.Verify(Data.Password, existingUser.Password);
+            bool passwordVerify = BCrypt.Net.BCrypt.Verify(Data.Password, userCache.Password);
 
             if (!passwordVerify)
                 return BadRequest("Incorrect password");
 
-            var token = Generate(existingUser);
+            var token = Generate(userCache);
 
             var res = new UserLoginResDTO
             {
-                UserId = existingUser.UserId,
-                Email = existingUser.Email,
+                UserId = userCache.UserId,
+                Email = userCache.Email,
                 Token = token,
-                FullName = existingUser.Fullname
+                FullName = userCache.Fullname
             };
             return Ok(res);
         }
@@ -130,6 +138,8 @@ public class UserController : ControllerBase
 
         return NoContent();
     }
+
+    
 
 
 }
